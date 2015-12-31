@@ -1,14 +1,3 @@
-#Script to clean up & help prepare csv export from CCURE 9000 for access.
-#Authored on: 12/28/2015
-#Updated on: 12/31/2015
-#Export journal entries for CCURE 9000 (not a report), and then point this to the CSV file.
-#Log on to the security server, open CCURE9000, go to Data Views > Query and hit the green arrow.
-#Run the SWHrep13 - Personnel Admitted at Doors in Time Range Query
-#Enter your specific paramters, then perform the search. Select all results, right click > export to csv file.
-#Delete the header row in a text editor (Notepad, Notepad++, Atom... don't use excel)
-#Change input_file to the name of your  file, place in the same directory as this script and run this script.
-
-
 #csv library
 require 'csv'
 #date
@@ -29,7 +18,9 @@ sort_array = Array.new
 group_array = Array.new
 value_array = Array.new
 
-
+test_array = Array.new
+test_array2 = Array.new
+test_array3 = Array.new
 #find date / time.
 def find_date(dtime)
 	dtime = DateTime.strptime(dtime.gsub(/ /, '_'), "%d/%m/%Y_%I:%M:%S_%P")
@@ -61,7 +52,7 @@ date_array = edit_array.map do |row_name,row_dtime|
   punchtime = find_date(row_dtime)
   punchtime = split_dtime(punchtime)
   eename = find_name(row_name)
-  [eename,punchtime].flatten
+  [eename,punchtime]
 end
 
 
@@ -69,14 +60,42 @@ end
 #Sort by name, date, time
 sort_array = date_array.sort_by { |n,d,t| [n,[d,t]] }
 
-#Still need to do min, max and group time for each date. 
+#Group all times for each day
+#group_array = sort_array.map do |n,d,t|
 
 
 
-CSV.open(output_file, "wb") do |csvfile|
- 	sort_array.each do |row|
-	  csvfile << row
+#end
+
+p sort_array
 
 
- 	end
-end
+
+
+
+
+
+
+
+
+
+# puts "date array start"
+# p date_array[0]
+#
+# puts "sort array now"
+# p sort_array[0]
+#
+# p value_array[0]
+
+
+
+#test_array2 = test_array.map { |row| bad_date row[1] }
+
+#test_array3 = test_array2.map { |row| find_name row}
+#p test_array3[0][0]
+
+#create new mapped array and indexes
+#edit_array = csv_array.map { |row| rowp = [row[3],row[4]] }
+#date_array = edit_array.map { |row2| bad_date row2 }
+
+#final_array = date_array.uniq
