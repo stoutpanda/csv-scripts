@@ -11,23 +11,17 @@
 
 #csv library
 require 'csv'
-#date
 require 'date'
-
 #Source File:
-input_file = 'JournalRaw.csv'
+input_file = 'testdata.csv'
 #output File:
 output_file = 'JournalRaw_updated.csv'
-
-
 
 csv_array = Array.new
 edit_array = Array.new
 date_array = Array.new
-final_array = Array.new
 sort_array = Array.new
 group_array = Array.new
-value_array = Array.new
 
 
 #find date / time.
@@ -44,7 +38,7 @@ end
 #split time and date
 def split_dtime (dtime)
   date = dtime.strftime("%m-%d-%Y")
-  time = dtime.strftime("%I:%M %P")
+  time = dtime.strftime("%H%M")
   [date,time]
 	end
 
@@ -56,7 +50,7 @@ csv_array = CSV.read(input_file)
 #Create a new array with the date and time we need
 edit_array = csv_array.map { |row| rowp = [row[3], row[4]] }
 
-#Pull just the name out,  convert date to date time, split into [name, [date,time]].
+#Pull just the name out,  convert date to date time, split into [name, date,time].
 date_array = edit_array.map do |row_name,row_dtime|
   punchtime = find_date(row_dtime)
   punchtime = split_dtime(punchtime)
@@ -64,19 +58,20 @@ date_array = edit_array.map do |row_name,row_dtime|
   [eename,punchtime].flatten
 end
 
-
-
 #Sort by name, date, time
-sort_array = date_array.sort_by { |n,d,t| [n,[d,t]] }
+sort_array = date_array.sort_by { |n,d,t| [n,d,t] }
 
-#Still need to do min, max and group time for each date. 
+#Group all times for each day
 
+#Thank you very much to Cary Swoveland from stackoverflow.
+group_array = sort_array.each_with_object({}) { |(name,date,val),h|
+  h.update(name => { date: date, val: [val.to_i] }) { |_,h1,h2|
+    { date: h1[:date], val: h1[:val] + h2[:val] } } }.
+      map { |name, h| [name, h[:date], *h[:val].minmax.map(&:to_s) ] }
 
-
+#Output to csv file
 CSV.open(output_file, "wb") do |csvfile|
- 	sort_array.each do |row|
+ 	group_array.each do |row|
 	  csvfile << row
-
-
- 	end
+	end
 end

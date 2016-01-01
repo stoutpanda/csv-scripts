@@ -1,10 +1,9 @@
 #csv library
 require 'csv'
-#date
 require 'date'
-
+require "time"
 #Source File:
-input_file = 'JournalRaw.csv'
+input_file = 'testdata.csv'
 #output File:
 output_file = 'JournalRaw_updated.csv'
 
@@ -35,7 +34,7 @@ end
 #split time and date
 def split_dtime (dtime)
   date = dtime.strftime("%m-%d-%Y")
-  time = dtime.strftime("%I:%M %P")
+  time = dtime.strftime("%H%M")
   [date,time]
 	end
 
@@ -47,55 +46,21 @@ csv_array = CSV.read(input_file)
 #Create a new array with the date and time we need
 edit_array = csv_array.map { |row| rowp = [row[3], row[4]] }
 
-#Pull just the name out,  convert date to date time, split into [name, [date,time]].
+#Pull just the name out,  convert date to date time, split into [name, date,time].
 date_array = edit_array.map do |row_name,row_dtime|
   punchtime = find_date(row_dtime)
   punchtime = split_dtime(punchtime)
   eename = find_name(row_name)
-  [eename,punchtime]
+  [eename,punchtime].flatten
 end
 
-
-
 #Sort by name, date, time
-sort_array = date_array.sort_by { |n,d,t| [n,[d,t]] }
+sort_array = date_array.sort_by { |n,d,t| [n,d,t] }
 
 #Group all times for each day
-#group_array = sort_array.map do |n,d,t|
 
-
-
-#end
-
-p sort_array
-
-
-
-
-
-
-
-
-
-
-
-# puts "date array start"
-# p date_array[0]
-#
-# puts "sort array now"
-# p sort_array[0]
-#
-# p value_array[0]
-
-
-
-#test_array2 = test_array.map { |row| bad_date row[1] }
-
-#test_array3 = test_array2.map { |row| find_name row}
-#p test_array3[0][0]
-
-#create new mapped array and indexes
-#edit_array = csv_array.map { |row| rowp = [row[3],row[4]] }
-#date_array = edit_array.map { |row2| bad_date row2 }
-
-#final_array = date_array.uniq
+#Thank you very much to Cary Swoveland from stackoverflow.
+group_array = sort_array.each_with_object({}) { |(name,date,val),h|
+  h.update(name => { date: date, val: [val.to_i] }) { |_,h1,h2|
+    { date: h1[:date], val: h1[:val] + h2[:val] } } }.
+      map { |name, h| [name, h[:date], *h[:val].minmax.map(&:to_s) ] }
