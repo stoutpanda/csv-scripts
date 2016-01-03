@@ -55,23 +55,25 @@ date_array = edit_array.map do |row_name,row_dtime|
   punchtime = find_date(row_dtime)
   punchtime = split_dtime(punchtime)
   eename = find_name(row_name)
-  [eename,punchtime].flatten
+  [eename,punchtime].flattenseesee
 end
 
 #Sort by name, date, time
 sort_array = date_array.sort_by { |n,d,t| [n,d,t] }
 
-#Group all times for each day
 
 #Thank you very much to Cary Swoveland from stackoverflow.
-group_array = sort_array.each_with_object({}) { |(name,date,val),h|
-  h.update(name => { date: date, val: [val.to_i] }) { |_,h1,h2|
-    { date: h1[:date], val: h1[:val] + h2[:val] } } }.
-      map { |name, h| [name, h[:date], *h[:val].minmax.map(&:to_s) ] }
+#group_array = sort_array.each_with_object({}) { |(name,date,val),h|
+#  h.update(name => { date: date, val: [val.to_i] }) { |_,h1,h2|
+#    { date: h1[:date], val: h1[:val] + h2[:val] } } }.
+#      map { |name, h| [name, h[:date], *h[:val].minmax.map(&:to_s) ] }
+
+group_array = sort_array.group_by { |name| name.first }
+
 
 #Output to csv file
-CSV.open(output_file, "wb") do |csvfile|
- 	group_array.each do |row|
-	  csvfile << row
-	end
-end
+#CSV.open(output_file, "wb") do |csvfile|
+# 	group_array.each do |row|
+#	  csvfile << row
+#	end
+# end
