@@ -13,7 +13,7 @@
 require 'csv'
 require 'date'
 #Source File:
-input_file = 'testdata.csv'
+input_file = 'JournalRaw_orig.csv'
 #output File:
 output_file = 'JournalRaw_updated.csv'
 
@@ -22,7 +22,9 @@ edit_array = Array.new
 date_array = Array.new
 sort_array = Array.new
 group_array = Array.new
-
+groupme_array = Array.new
+calc_array = Array.new
+final_array = Array.new
 
 #find date / time.
 def find_date(dtime)
@@ -41,8 +43,11 @@ def split_dtime (dtime)
   time = dtime.strftime("%H%M")
   [date,time]
 	end
-
-
+#Pretty formatting for time
+	def cleantime (time)
+	  clean_time = DateTime.strptime(time, "%H%M")
+		testtime = clean_time.strftime("%H:%M %P")
+		end
 
 #read csv and put it into an array of arrays
 csv_array = CSV.read(input_file)
@@ -55,7 +60,7 @@ date_array = edit_array.map do |row_name,row_dtime|
   punchtime = find_date(row_dtime)
   punchtime = split_dtime(punchtime)
   eename = find_name(row_name)
-  [eename,punchtime].flattenseesee
+  [eename,punchtime].flatten
 end
 
 #Sort by name, date, time
@@ -63,17 +68,19 @@ sort_array = date_array.sort_by { |n,d,t| [n,d,t] }
 
 
 #Thank you very much to Cary Swoveland from stackoverflow.
-#group_array = sort_array.each_with_object({}) { |(name,date,val),h|
-#  h.update(name => { date: date, val: [val.to_i] }) { |_,h1,h2|
-#    { date: h1[:date], val: h1[:val] + h2[:val] } } }.
-#      map { |name, h| [name, h[:date], *h[:val].minmax.map(&:to_s) ] }
+#Convert to a hash using the name and date as the key, & convert the values to an int, gather them up.
+group_array = sort_array.each_with_object({}) { |(name,date,time),h|
+	h.update([name,date] => {  time: [time.to_i] }) { |k, h1, h2| { time: h1[:time] + h2[:time] }}}
 
-group_array = sort_array.group_by { |name| name.first }
+#Take the new group array, create a new array with only the min and max times, format them back to string.
+calc_array = group_array.map { |k,value| [k, value[:time].minmax.map { |n| "%04d" % n }].flatten}
 
+#make the dates pretty
+final_array = calc_array.map { |n,d,t1,t2| [n,d,cleantime(t1),cleantime(t2)] }
 
 #Output to csv file
-#CSV.open(output_file, "wb") do |csvfile|
-# 	group_array.each do |row|
-#	  csvfile << row
-#	end
-# end
+CSV.open(output_file, "wb") do |csvfile|
+	final_array.each do |row|
+		csvfile << row
+		end
+		end
